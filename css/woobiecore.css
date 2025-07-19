@@ -1,0 +1,226 @@
+/* Woobiecore Design System */
+:root {
+    /* The Four Phosphors */
+    --phosphor-cyan: #00ffff;
+    --phosphor-magenta: #ff00ff;
+    --phosphor-amber: #ffcc00;
+    --phosphor-green: #00ff00;
+    
+    /* The Void */
+    --crt-black: #000000;
+    
+    /* Dimmed versions */
+    --phosphor-cyan-dim: #004444;
+    --phosphor-magenta-dim: #440044;
+    --phosphor-amber-dim: #443300;
+    --phosphor-green-dim: #004400;
+}
+
+/* Theme application */
+body[data-theme="cyan"] {
+    --primary: var(--phosphor-cyan);
+    --primary-dim: var(--phosphor-cyan-dim);
+}
+
+body[data-theme="magenta"] {
+    --primary: var(--phosphor-magenta);
+    --primary-dim: var(--phosphor-magenta-dim);
+}
+
+body[data-theme="amber"] {
+    --primary: var(--phosphor-amber);
+    --primary-dim: var(--phosphor-amber-dim);
+}
+
+body[data-theme="green"] {
+    --primary: var(--phosphor-green);
+    --primary-dim: var(--phosphor-green-dim);
+}
+
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--crt-black);
+    color: var(--primary);
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+/* CRT Effects */
+.crt-wrapper {
+    position: relative;
+    min-height: 100vh;
+    padding: 2rem;
+    overflow: hidden;
+}
+
+.crt-wrapper::before {
+    content: "";
+    position: absolute;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+}
+
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Text effects */
+.neon-glow {
+    text-shadow: 
+        0 0 5px var(--primary),
+        0 0 10px var(--primary),
+        0 0 20px var(--primary);
+}
+
+/* Typing animation */
+.typing-effect {
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+}
+
+.delay-1 { animation-delay: 1s; }
+.delay-2 { animation-delay: 2s; }
+.delay-3 { animation-delay: 3s; }
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* Glow variations */
+.glow-amber {
+    text-shadow: 
+        0 0 5px var(--phosphor-amber),
+        0 0 10px var(--phosphor-amber),
+        0 0 20px var(--phosphor-amber);
+}
+
+/* Button styles */
+.phosphor-btn {
+    background: var(--crt-black);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 0.5rem 1rem;
+    margin: 0.5rem;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    transition: all 0.3s;
+}
+
+.phosphor-btn:hover {
+    background: var(--primary-dim);
+    box-shadow: 0 0 20px var(--primary);
+}
+
+.phosphor-btn.active {
+    background: var(--primary-dim);
+    box-shadow: inset 0 0 10px var(--primary);
+}
+
+/* Play button */
+.play-button {
+    display: inline-block;
+    margin: 2rem 0;
+    padding: 1rem 2rem;
+    background: var(--crt-black);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.play-button:hover {
+    background: var(--primary-dim);
+    box-shadow: 
+        0 0 10px var(--primary),
+        0 0 20px var(--primary),
+        0 0 40px var(--primary),
+        inset 0 0 20px var(--primary);
+}
+
+/* Container */
+.crt-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header */
+.ascii-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo {
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary);
+}
+
+/* Main content */
+.intro-text {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.intro-text p {
+    margin: 1rem 0;
+    font-size: 1.2rem;
+}
+
+.phosphor-selector {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.cta-section {
+    text-align: center;
+    margin: 4rem 0;
+}
+
+.sub-text {
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--primary-dim);
+    opacity: 0.7;
+}
+
+footer p {
+    margin: 0.5rem 0;
+}
