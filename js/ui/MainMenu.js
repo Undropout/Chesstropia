@@ -2,6 +2,11 @@ import { EventEmitter } from '../utils/EventEmitter.js';
 
 export class MainMenu extends EventEmitter {
     constructor(container, options) {
+        document.getElementById('start-game').addEventListener('click', (e) => {
+    e.preventDefault();
+    // Emit an event to show the team selector screen
+    this.eventEmitter.emit('selectTeam'); 
+});
         super();
         this.container = container;
         this.options = options;

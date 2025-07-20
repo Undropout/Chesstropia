@@ -31,6 +31,7 @@
             width: 100%;
             height: 100vh;
             height: calc(var(--vh, 1vh) * 100);
+            position: relative; /* Needed for overlay children */
         }
         
         /* Preserve CRT effect during game */
@@ -186,6 +187,7 @@
 <body data-theme="green">
     <div id="app">
         <div class="crt-wrapper">
+            <div id="storm-announcer-container"></div>
             <div class="scanlines"></div>
             <div class="crt-content">
                 <!-- Landing page content -->
@@ -193,18 +195,18 @@
                     <header class="ascii-header">
                         <pre class="logo">
 ╔═══════════════════════════════════════════════════════════╗
-║   _____ _                   _                   _         ║   
-║  / ____| |                 | |                 (_)        ║
-║ | |    | |__   ___  ___ ___| |_ _ __ ___  _ __  _   ____  ║
-║ | |    | '_ \ / _ \/ __/ __| __| '__/ _ \| '_ \| | / _  \ ║
-║ | |____| | | |  __/\__ \__ \ |_| | | (_) | |_) | || (_) | ║
-║  \_____|_| |_|\___||___/___/\__|_|  \___/| .__/|_| \__/|| ║
-║                                          | |              ║
-║  Where Every Piece Has Feelings          |_|              ║
+║   _____ _               _               _                 ║ 
+║  / ____| |             | |             (_)                ║
+║ | |    | |__   ___  ___| |_ _ __ ___  _ __  _  ___  _ __   ║
+║ | |    | '_ \ / _ \/ __/ __| '__/ _ \| '_ \| |/ _ \| '_ \  ║
+║ | |____| | | |  __/\\__ \\__ \\ | | (_) | |_) | | (_) | | | | ║
+║  \_____|_| |_|\___||___/___/\__|_|  \___/| .__/|_|\___/|_| |_| ║
+║                                         | |                  ║
+║  Where Every Piece Has Feelings         |_|                  ║
 ╚═══════════════════════════════════════════════════════════╝
                         </pre>
                     </header>
-                   
+                    
                     <main>
                         <div class="intro-text">
                             <p class="typing-effect">It's checkers, but your pieces have anxiety.</p>
@@ -212,7 +214,7 @@
                             <p class="typing-effect delay-2">And if you tell them to "calm down"...</p>
                             <p class="typing-effect delay-3 glow-amber">They might just walk off the board.</p>
                         </div>
-                       
+                        
                         <div class="phosphor-selector">
                             <p>Choose your monitor:</p>
                             <button class="phosphor-btn active" data-theme="green">Classic Green</button>
@@ -220,14 +222,14 @@
                             <button class="phosphor-btn" data-theme="cyan">Deep Cyan</button>
                             <button class="phosphor-btn" data-theme="magenta">Heart Magenta</button>
                         </div>
-                       
+                        
                         <div class="cta-section">
                             <a href="#" id="start-game" class="play-button neon-glow">
                                 <span class="button-text">INITIALIZE EMPATHY.EXE</span>
                             </a>
                             <p class="sub-text">No account needed. Just compassion.</p>
                         </div>
-                       
+                        
                         <footer>
                             <p>Created by The Woobie Foundation</p>
                             <p>Fighting loneliness through emotional intelligence</p>
@@ -239,13 +241,13 @@
                 <div id="game-container" style="display: none; height: 100%;"></div>
             </div>
         </div>
-        
-        <!-- Initial loader (hidden by default) -->
-        <div class="initial-loader" style="display: none;">
-            <div style="text-align: center;">
-                <h1>LOADING EMOTIONS...</h1>
-                <p class="loading-message">Initializing empathy protocols...</p>
-            </div>
+    </div>
+    
+    <!-- Initial loader (hidden by default) -->
+    <div class="initial-loader" style="display: none;">
+        <div style="text-align: center;">
+            <h1>LOADING EMOTIONS...</h1>
+            <p class="loading-message">Initializing empathy protocols...</p>
         </div>
     </div>
     
@@ -255,230 +257,69 @@
     <!-- Screen reader announcements -->
     <div id="announcer" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
     
-   <!-- Load the game as a module -->
-<script type="module">
-    // Test module loading first
-    async function testModules() {
-        try {
-            console.log('Testing module loading...');
-            const testModule = await import('./js/test.js');
-            console.log('Test successful:', testModule.testMessage);
-            return true;
-        } catch (error) {
-            console.error('Module test failed:', error);
-            return false;
-        }
-    }
-    
-    // Initialize game only if modules work
-    async function initializeGame() {
-        // First test if modules can load at all
-        const modulesWork = await testModules();
+   <!-- This single script block now correctly loads and initializes the game -->
+    <script type="module">
+        // This is the main entry point for the application.
+        // It imports the App class and sets up the landing page listeners.
         
-        if (!modulesWork) {
-            window.gameLoadError = new Error('ES6 modules are not loading correctly. Check your file paths.');
-            return;
-        }
-        
-        try {
-            console.log('Loading ChessTropia modules...');
-            
-            // For now, let's create a mock app
-            window.ChessTropiaApp = class {
-                constructor() {
-                    this.container = document.getElementById('game-container');
-                    this.initialize();
-                }
-                
-                async initialize() {
-                    // Show a working menu for now
-                    this.container.innerHTML = `
-                        <div class="view-container">
-                            <h1 class="game-title">ChessTropia</h1>
-                            <div style="max-width: 600px; margin: 2rem auto;">
-                                <p style="color: var(--phosphor-color); margin: 2rem 0;">
-                                    Welcome to ChessTropia!
-                                </p>
-                                <p style="color: var(--phosphor-color); opacity: 0.7; margin-bottom: 2rem;">
-                                    The full game modules are being set up. For now, here's what would load:
-                                </p>
-                                <div style="text-align: left; background: rgba(0,255,0,0.1); padding: 1rem; border: 1px solid var(--phosphor-color); border-radius: 4px;">
-                                    <h3 style="color: var(--phosphor-color);">Required Files:</h3>
-                                    <ul style="color: var(--phosphor-color); opacity: 0.8;">
-                                        <li>/js/app.js - Main application</li>
-                                        <li>/js/game/GameController.js - Game logic</li>
-                                        <li>/js/game/Board.js - Board management</li>
-                                        <li>/js/game/Piece.js - Piece emotions</li>
-                                        <li>/js/game/EmpathySystem.js - Empathy mechanics</li>
-                                        <li>/js/game/StormSystem.js - Emotional storms</li>
-                                        <li>/js/game/AIOpponent.js - AI opponent</li>
-                                        <li>/js/ui/MainMenu.js - Menu interface</li>
-                                        <li>/js/ui/TeamSelector.js - Team selection</li>
-                                        <li>/js/ui/OptionsMenu.js - Settings</li>
-                                        <li>/js/utils/EventEmitter.js - Event system</li>
-                                        <li>/js/data/teams/*.js - Team data</li>
-                                        <li>/js/data/dialogue/*.js - Dialogue content</li>
-                                        <li>/js/utils/*.js - Utility modules</li>
-                                    </ul>
-                                </div>
-                                <button class="button" onclick="location.reload()" style="margin-top: 2rem;">
-                                    Return to Start
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-            };
-            
-            window.gameReady = true;
-            console.log('Mock ChessTropia ready');
-            
-        } catch (error) {
-            console.error('Failed to create mock app:', error);
-            window.gameLoadError = error;
-        }
-    }
-    
-    // Initialize on load
-    initializeGame();
-</script>
-    
-    <script>
-        // Phosphor theme selector
-        document.querySelectorAll('.phosphor-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Update theme
-                const theme = e.target.getAttribute('data-theme');
-                document.body.setAttribute('data-theme', theme);
-                
-                // Update active state
-                document.querySelectorAll('.phosphor-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                
-                // Store preference
-                localStorage.setItem('chesstropia_phosphor_theme', theme);
-                
-                console.log('Theme changed to:', theme);
+        // The 'import' statement will recursively load all necessary modules.
+        // If any module fails (like the teamList.js error), it will throw an error here.
+        import App from './js/app.js';
+
+        let appInstance = null;
+
+        function initializeLandingPage() {
+            // Phosphor theme selector
+            document.querySelectorAll('.phosphor-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const theme = e.target.getAttribute('data-theme');
+                    document.body.setAttribute('data-theme', theme);
+                    document.querySelectorAll('.phosphor-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    localStorage.setItem('chesstropia_phosphor_theme', theme);
+                });
             });
-        });
-        
-        // Restore saved phosphor theme
-        const savedTheme = localStorage.getItem('chesstropia_phosphor_theme');
-        if (savedTheme) {
-            document.body.setAttribute('data-theme', savedTheme);
-            document.querySelectorAll('.phosphor-btn').forEach(b => b.classList.remove('active'));
-            const savedButton = document.querySelector(`[data-theme="${savedTheme}"]`);
-            if (savedButton) {
-                savedButton.classList.add('active');
+            
+            // Restore saved phosphor theme
+            const savedTheme = localStorage.getItem('chesstropia_phosphor_theme');
+            if (savedTheme) {
+                document.body.setAttribute('data-theme', savedTheme);
+                document.querySelectorAll('.phosphor-btn').forEach(b => b.classList.remove('active'));
+                const savedButton = document.querySelector(`[data-theme="${savedTheme}"]`);
+                if (savedButton) savedButton.classList.add('active');
             }
+            
+            // Handle start game button
+            document.getElementById('start-game').addEventListener('click', (e) => {
+                e.preventDefault();
+                startChessTropia();
+            });
         }
-        
-        // Handle start game button
-        document.getElementById('start-game').addEventListener('click', (e) => {
-            e.preventDefault();
-            startChessTropia();
-        });
-        
-        async function startChessTropia() {
+
+        function startChessTropia() {
             console.log('Starting ChessTropia...');
             
-            // Hide landing content
+            // Hide landing content and prepare game container
             document.querySelector('.landing-content').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.style.display = 'block';
             document.body.classList.add('game-running');
             
-            // Show loading
-            const loader = document.querySelector('.initial-loader');
-            loader.style.display = 'flex';
-            
-            // Cycle through loading messages
-            const messages = [
-                "Initializing empathy protocols...",
-                "Loading emotional responses...",
-                "Calibrating trust algorithms...",
-                "Preparing safe spaces...",
-                "Opening hearts..."
-            ];
-            
-            let messageIndex = 0;
-            const messageInterval = setInterval(() => {
-                messageIndex = (messageIndex + 1) % messages.length;
-                const messageEl = loader.querySelector('.loading-message');
-                if (messageEl) {
-                    messageEl.textContent = messages[messageIndex];
-                }
-            }, 2000);
-            
-            try {
-                // Wait for game to be ready
-                let attempts = 0;
-                while (!window.gameReady && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-                
-                if (window.gameLoadError) {
-                    throw window.gameLoadError;
-                }
-                
-                if (!window.gameReady) {
-                    throw new Error('Game modules failed to load after timeout');
-                }
-                
-                // Create and start the app
-                console.log('Creating ChessTropia app instance...');
-                window.app = new window.ChessTropiaApp();
-                
-                // Clear the loading interval
-                clearInterval(messageInterval);
-                
+            // Initialize and start the application
+            if (!appInstance) {
+                appInstance = new App(gameContainer);
+                appInstance.start();
                 console.log('ChessTropia started successfully');
-                
-            } catch (error) {
-                console.error('Failed to start game:', error);
-                clearInterval(messageInterval);
-                
-                // Show detailed error
-                loader.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--phosphor-color, #00ff00);">
-                        <h1>INITIALIZATION FAILED</h1>
-                        <p style="font-family: 'IBM Plex Mono', monospace;">Could not start empathy protocols.</p>
-                        <div class="error-details">
-                            <strong>Error:</strong> ${error.message}<br>
-                            <strong>Type:</strong> ${error.name}<br>
-                            ${error.stack ? `<strong>Stack:</strong><br><pre>${error.stack}</pre>` : ''}
-                        </div>
-                        <p style="margin-top: 1rem; opacity: 0.7;">
-                            Check the browser console for more details.
-                        </p>
-                        <button onclick="location.reload()" style="
-                            padding: 0.5rem 1rem; 
-                            margin-top: 1rem;
-                            background: transparent;
-                            border: 1px solid currentColor;
-                            color: currentColor;
-                            font-family: 'IBM Plex Mono', monospace;
-                            cursor: pointer;
-                        ">
-                            RETRY
-                        </button>
-                    </div>
-                `;
             }
         }
-        
-        // Add keyboard shortcut to start game
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !document.body.classList.contains('game-running')) {
-                startChessTropia();
-            }
+
+        // Run the initialization code once the DOM is fully loaded.
+        // This structure ensures that if the module import fails, the error is clearly
+        // visible in the console, and the landing page listeners won't be attached.
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeLandingPage();
         });
-        
-        // Test that JavaScript is working
-        console.log('ChessTropia landing page loaded');
     </script>
 </body>
 </html>

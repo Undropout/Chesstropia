@@ -224,3 +224,226 @@ footer {
 footer p {
     margin: 0.5rem 0;
 }
+/* Storm Announcer Styles */
+#storm-announcer-container {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    z-index: 1000;
+    pointer-events: none; /* Allows clicks to pass through */
+    text-align: center;
+}
+
+.storm-announcement {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    border: 2px solid var(--glow-color);
+    background-color: var(--scanline-bg-color-transparent);
+    color: var(--glow-color);
+    text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    border-radius: 4px;
+}
+
+.storm-announcement.visible {
+    opacity: 1;
+}
+
+.storm-announcement small {
+    font-size: 1rem;
+    font-weight: normal;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+.storm-announcement.storm-start {
+    border-color: var(--critical-color);
+    color: var(--critical-color);
+    text-shadow: 0 0 5px var(--critical-color), 0 0 10px var(--critical-color);
+}
+
+.storm-announcement.storm-end {
+    border-color: var(--success-color);
+    color: var(--success-color);
+    text-shadow: 0 0 5px var(--success-color), 0 0 10px var(--success-color);
+}
+/* Team Selector Styles */
+.team-selector-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--glow-color);
+}
+
+.team-selector-header {
+    text-align: center;
+    border-bottom: 2px solid var(--glow-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.team-selector-header h1 {
+    font-size: 2.5rem;
+    text-shadow: 0 0 10px var(--glow-color);
+}
+
+.team-selector-main {
+    display: flex;
+    flex: 1;
+    gap: 2rem;
+    overflow: hidden;
+}
+
+.team-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.team-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: 1px solid var(--glow-color-transparent);
+    color: var(--glow-color);
+    text-align: left;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.team-button:hover {
+    background: var(--glow-color-transparent);
+    border-color: var(--glow-color);
+}
+
+.team-button.active {
+    background: var(--glow-color);
+    color: var(--scanline-bg-color);
+    text-shadow: none;
+    font-weight: bold;
+}
+
+.team-details {
+    flex: 2;
+    padding: 1.5rem;
+    border: 1px solid var(--glow-color-transparent);
+    overflow-y: auto;
+    background: var(--scanline-bg-color-transparent);
+}
+
+.team-details .placeholder {
+    color: var(--glow-color-transparent-strong);
+    font-style: italic;
+}
+
+.team-details h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 5px var(--glow-color);
+}
+
+.team-details .team-description {
+    margin-bottom: 1.5rem;
+    color: var(--glow-color);
+    opacity: 0.9;
+}
+
+.team-details .team-motivation {
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.roster-list {
+    list-style: none;
+    padding: 0;
+}
+
+.roster-list li {
+    padding: 0.25rem 0;
+}
+
+.team-selector-footer {
+    text-align: center;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+    border-top: 2px solid var(--glow-color);
+}
+
+.team-selector-footer .menu-button {
+    padding: 1rem 3rem;
+    font-size: 1.25rem;
+}
+
+.team-selector-footer .menu-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--glow-color-transparent-strong);
+    border-color: var(--glow-color-transparent-strong);
+}
+/* Dialogue System Styles */
+#dialogue-container {
+    position: absolute;
+    inset: 0;
+    z-index: 2000; /* Make sure it's on top of everything */
+}
+
+.dialogue-box {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30vh;
+    background: var(--scanline-bg-color-transparent-strong);
+    border-top: 2px solid var(--glow-color);
+    color: var(--glow-color);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.dialogue-content {
+    width: 100%;
+    max-width: 800px;
+}
+
+.dialogue-character {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 5px var(--glow-color);
+}
+
+.dialogue-text {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+#dialogue-next-btn {
+    float: right;
+}
