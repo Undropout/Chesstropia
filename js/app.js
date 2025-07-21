@@ -3,7 +3,7 @@
  * The main application controller. It manages different views (MainMenu, Game, Options)
  * and orchestrates the overall application flow.
  */
-import EventEmitter from './utils/EventEmitter.js';
+import { EventEmitter } from './utils/EventEmitter.js';
 import SaveManager from './utils/SaveManager.js';
 import MainMenu from './ui/MainMenu.js';
 import TeamSelector from './ui/TeamSelector.js';
@@ -12,175 +12,162 @@ import BoardRenderer from './ui/BoardRenderer.js';
 import EmotionalHUD from './ui/EmotionalHUD.js';
 import EmpathyInterface from './ui/EmpathyInterface.js';
 import StormAnnouncer from './ui/StormAnnouncer.js';
+import CampaignManager from './campaigns/CampaignManager.js';
+import DialogueSystem from './ui/DialogueSystem.js';
 
 class App {
-    /**
-     * Initializes the main application.
-     * @param {HTMLElement} container - The main container element to render content into.
-     */
     constructor(container) {
-        this.container = container;
+        this.appContainer = container; // The main #app div
         this.eventEmitter = new EventEmitter();
         this.saveManager = new SaveManager();
         
         // UI Components
         this.mainMenu = new MainMenu(this.eventEmitter);
-        this.teamSelector = null;
-        this.boardRenderer = null;
-        this.emotionalHUD = null;
-        this.empathyInterface = null;
-        this.stormAnnouncer = null;
+        this.teamSelector = new TeamSelector(this.eventEmitter);
+        this.dialogueSystem = new DialogueSystem(this.eventEmitter);
 
         // Game Logic
         this.gameController = null;
+        this.campaignManager = new CampaignManager(this.eventEmitter);
+        this.isCampaignActive = false;
 
         this.bindEvents();
     }
 
-    /**
-     * Binds to custom events to orchestrate the application flow.
-     */
     bindEvents() {
+        this.eventEmitter.on('showMainMenu', this.showMainMenu.bind(this));
         this.eventEmitter.on('selectTeam', this.showTeamSelector.bind(this));
         this.eventEmitter.on('newGame', this.startNewGame.bind(this));
         this.eventEmitter.on('loadGame', this.handleLoadGame.bind(this));
         this.eventEmitter.on('saveGame', this.handleSaveGame.bind(this));
         this.eventEmitter.on('gameOver', this.handleGameOver.bind(this));
+        this.eventEmitter.on('startCampaign', this.handleStartCampaign.bind(this));
+        this.eventEmitter.on('startCampaignGame', this.startCampaignGame.bind(this));
+        this.eventEmitter.on('showDialogue', this.handleShowDialogue.bind(this));
     }
 
-    /**
-     * Kicks off the entire application by showing the main menu.
-     */
     start() {
         console.log('ChessTropia application started.');
         this.showMainMenu();
     }
 
-    /**
-     * Clears the container and renders the main menu.
-     */
+    clearContainer() {
+        this.appContainer.innerHTML = '';
+        // Always ensure the dialogue container is removed when clearing
+        const oldDialogue = document.getElementById('dialogue-container');
+        if (oldDialogue) oldDialogue.remove();
+    }
+    
     showMainMenu() {
-        this.container.innerHTML = '';
+        this.isCampaignActive = false;
+        this.clearContainer();
         const hasSave = this.saveManager.hasSaveGame();
-        this.mainMenu.render(this.container, hasSave);
+        // The main menu now renders directly into the app container
+        this.mainMenu.render(this.appContainer, hasSave);
     }
 
-    /**
-     * Renders the team selection screen.
-     */
     showTeamSelector() {
-        this.container.innerHTML = '';
-        this.teamSelector = new TeamSelector(this.eventEmitter);
-        this.teamSelector.render(this.container);
+        this.clearContainer();
+        this.teamSelector.render(this.appContainer);
     }
+    
+    showGameScreen() {
+        this.clearContainer();
+        this.appContainer.innerHTML = `
+            <div class="game-screen">
+                <div id="board-container"></div>
+                <div id="side-panel">
+                    <div id="hud-container"></div>
+                    <div id="empathy-container"></div>
+                    <div id="game-actions-container"></div>
+                </div>
+            </div>
+        `;
 
-    /**
-     * Sets up the shared UI components for any game session (new or loaded).
-     */
-    setupGameUI() {
-        this.container.innerHTML = ''; // Clear the container for the game view
-
-        const gameScreen = document.createElement('div');
-        gameScreen.className = 'game-screen';
-
-        const boardContainer = document.createElement('div');
-        boardContainer.id = 'board-container';
-
-        const sidePanel = document.createElement('div');
-        sidePanel.id = 'side-panel';
-
-        const hudContainer = document.createElement('div');
-        hudContainer.id = 'hud-container';
-
-        const empathyContainer = document.createElement('div');
-        empathyContainer.id = 'empathy-container';
-
-        // Add a container for in-game buttons like Save
-        const gameActionsContainer = document.createElement('div');
-        gameActionsContainer.id = 'game-actions-container';
-        
-        sidePanel.appendChild(hudContainer);
-        sidePanel.appendChild(empathyContainer);
-        sidePanel.appendChild(gameActionsContainer); // Add actions container
-        gameScreen.appendChild(boardContainer);
-        gameScreen.appendChild(sidePanel);
-        this.container.appendChild(gameScreen);
-
-        // Instantiate UI components
-        this.boardRenderer = new BoardRenderer(boardContainer, this.eventEmitter);
-        this.emotionalHUD = new EmotionalHUD(hudContainer, this.eventEmitter);
-        this.empathyInterface = new EmpathyInterface(empathyContainer, this.eventEmitter);
-        
+        // Instantiate game-specific UI components
+        const boardContainer = document.getElementById('board-container');
+        const hudContainer = document.getElementById('hud-container');
+        const empathyContainer = document.getElementById('empathy-container');
         const stormContainer = document.getElementById('storm-announcer-container');
-        this.stormAnnouncer = new StormAnnouncer(stormContainer, this.eventEmitter);
+        
+        new BoardRenderer(boardContainer, this.eventEmitter);
+        new EmotionalHUD(hudContainer, this.eventEmitter);
+        new EmpathyInterface(empathyContainer, this.eventEmitter);
+        new StormAnnouncer(stormContainer, this.eventEmitter);
 
-        // Add a Save Game button
-        const saveButton = document.createElement('button');
-        saveButton.id = 'save-game-btn';
-        saveButton.className = 'menu-button';
-        saveButton.textContent = 'Save & Quit';
-        gameActionsContainer.appendChild(saveButton);
-        saveButton.addEventListener('click', () => this.eventEmitter.emit('saveGame'));
+        if (!this.isCampaignActive) {
+            const gameActionsContainer = document.getElementById('game-actions-container');
+            const saveButton = document.createElement('button');
+            saveButton.id = 'save-game-btn';
+            saveButton.className = 'menu-button';
+            saveButton.textContent = 'Save & Quit';
+            gameActionsContainer.appendChild(saveButton);
+            saveButton.addEventListener('click', () => this.eventEmitter.emit('saveGame'));
+        }
     }
 
-    /**
-     * Starts a new game session from the team selector.
-     */
     startNewGame(options = {}) {
-        console.log('Setting up new game with options:', options);
-        this.setupGameUI();
+        this.isCampaignActive = false;
+        this.showGameScreen();
         
         this.gameController = new GameController(this.eventEmitter);
+        this.gameController.startGame(options.playerTeamId, options.opponentTeamId, options.aiType);
+    }
+    
+    startCampaignGame(gameConfig) {
+        this.showGameScreen();
         
-        const playerTeam = options.playerTeamId || 'donuts';
-        const opponentTeam = options.opponentTeamId || 'renaissance_pets';
-        const aiType = options.aiType || 'TheStrategist';
-
-        this.gameController.startGame(playerTeam, opponentTeam, aiType);
+        this.gameController = new GameController(this.eventEmitter);
+        this.gameController.startGame(gameConfig.playerTeamId, gameConfig.opponentTeamId, gameConfig.aiType);
+    }
+    
+    handleStartCampaign() {
+        this.isCampaignActive = true;
+        this.campaignManager.startCampaign(); // This will emit a 'showDialogue' event
     }
 
-    /**
-     * Loads a game from a saved state.
-     */
+    handleShowDialogue({ dialogue, onComplete }) {
+        // Dialogue is now handled as an overlay on top of the #app container
+        this.dialogueSystem.show(this.appContainer, dialogue, onComplete);
+    }
+
     handleLoadGame() {
         const savedState = this.saveManager.loadGame();
         if (savedState) {
-            console.log('Loading game from save file...');
-            this.setupGameUI();
+            this.isCampaignActive = false;
+            this.showGameScreen();
             this.gameController = new GameController(this.eventEmitter);
             this.gameController.loadFromState(savedState);
         } else {
-            console.error("Could not load game, no save file found.");
             this.showMainMenu();
         }
     }
 
-    /**
-     * Saves the current game state and returns to the main menu.
-     */
     handleSaveGame() {
-        if (this.gameController) {
+        if (this.gameController && !this.isCampaignActive) {
             const state = this.gameController.getSaveState();
             if (this.saveManager.saveGame(state)) {
-                alert("Game Saved!"); // Replace with a better notification later
-                this.gameController = null; // End the current game session
+                this.gameController = null;
                 this.showMainMenu();
-            } else {
-                alert("Failed to save game. Storage might be full.");
             }
         }
     }
 
-    /**
-     * Handles the end of a game.
-     */
     handleGameOver(result) {
-        console.log(`Game Over! Winner: ${result.winner}`);
-        this.saveManager.deleteSave(); // Clear the save file on game over
-        setTimeout(() => {
-            alert(`Game Over! The winner is: ${result.winner}`);
-            this.showMainMenu();
-        }, 100);
+        if (this.isCampaignActive && result.winner === 'player') {
+            this.campaignManager.handleMissionComplete();
+        } else if (this.isCampaignActive && result.winner !== 'player') {
+            this.eventEmitter.emit('showDialogue', {
+                dialogue: [{ character: 'Coach', text: 'That didn\'t go as planned. Let\'s try that again.' }],
+                onComplete: () => this.handleStartCampaign()
+            });
+        } else {
+            this.saveManager.deleteSave();
+            setTimeout(() => {
+                alert(`Game Over! The winner is: ${result.winner}`);
+                this.showMainMenu();
+            }, 100);
+        }
     }
 }
 

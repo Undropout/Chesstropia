@@ -1,44 +1,36 @@
 /**
  * @file DialogueSystem.js
- * A UI component for displaying sequences of dialogue.
+ * A UI component for displaying sequences of dialogue as an overlay.
  */
 class DialogueSystem {
-    constructor(container, eventEmitter) {
-        this.container = container;
+    constructor(eventEmitter) {
         this.eventEmitter = eventEmitter;
         this.dialogueQueue = [];
-        this.currentCallback = null;
-        this.isVisible = false;
-        this.dialogueBox = null;
-
-        this.bindEvents();
+        this.onCompleteCallback = null;
+        this.dialogueContainer = null;
     }
 
-    bindEvents() {
-        this.eventEmitter.on('showDialogue', this.show.bind(this));
-    }
-
-    show({ dialogue, onComplete }) {
+    /**
+     * Shows the dialogue box over the provided parent container.
+     * @param {HTMLElement} parentContainer - The element to render the dialogue on top of.
+     * @param {Array<object>} dialogue - The array of dialogue lines.
+     * @param {Function} onComplete - The callback to execute when the dialogue is finished.
+     */
+    show(parentContainer, dialogue, onComplete) {
         if (!dialogue || dialogue.length === 0) {
             if (onComplete) onComplete();
             return;
         }
 
         this.dialogueQueue = [...dialogue];
-        this.currentCallback = onComplete;
-        this.isVisible = true;
+        this.onCompleteCallback = onComplete;
 
-        this.render();
+        // Create and append the container
+        this.dialogueContainer = document.createElement('div');
+        this.dialogueContainer.id = 'dialogue-container';
+        parentContainer.appendChild(this.dialogueContainer);
+
         this.next();
-    }
-
-    render() {
-        if (!this.dialogueBox) {
-            this.dialogueBox = document.createElement('div');
-            this.dialogueBox.className = 'dialogue-box';
-            this.container.appendChild(this.dialogueBox);
-        }
-        this.dialogueBox.style.display = this.isVisible ? 'flex' : 'none';
     }
 
     next() {
@@ -48,11 +40,13 @@ class DialogueSystem {
         }
 
         const currentLine = this.dialogueQueue.shift();
-        this.dialogueBox.innerHTML = `
-            <div class="dialogue-content">
-                <div class="dialogue-character">${currentLine.character}</div>
-                <p class="dialogue-text">${currentLine.text}</p>
-                <button id="dialogue-next-btn" class="menu-button">Next</button>
+        this.dialogueContainer.innerHTML = `
+            <div class="dialogue-box">
+                <div class="dialogue-content">
+                    <div class="dialogue-character">${currentLine.character}</div>
+                    <p class="dialogue-text">${currentLine.text}</p>
+                    <button id="dialogue-next-btn" class="menu-button">Next</button>
+                </div>
             </div>
         `;
 
@@ -60,11 +54,13 @@ class DialogueSystem {
     }
 
     hide() {
-        this.isVisible = false;
-        this.render();
-        if (this.currentCallback) {
-            this.currentCallback();
-            this.currentCallback = null;
+        if (this.dialogueContainer) {
+            this.dialogueContainer.remove();
+            this.dialogueContainer = null;
+        }
+        if (this.onCompleteCallback) {
+            this.onCompleteCallback();
+            this.onCompleteCallback = null;
         }
     }
 }

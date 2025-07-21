@@ -6,7 +6,7 @@
  */
 
 // Module Imports
-import EventEmitter from '../utils/EventEmitter.js';
+import { EventEmitter } from '../utils/EventEmitter.js';
 import Board from './Board.js';
 import Piece from './Piece.js'; // We need this for re-instantiating pieces on load
 import EmpathySystem from './EmpathySystem.js';
@@ -25,16 +25,16 @@ class GameController {
      */
     constructor(eventEmitter) {
         this.eventEmitter = eventEmitter;
-        this.gameState = 'pending'; // Game states: pending, active, paused, gameover
+        this.gameState = 'pending';
+        this.gameMode = 'checkers';
         this.board = null;
-        this.pieces = new Map(); // Using a Map to store piece instances by their unique ID.
+        this.pieces = new Map();
         this.playerTeamId = null;
         this.opponentTeamId = null;
-        this.currentPlayer = 'player'; // 'player' or 'opponent'
+        this.currentPlayer = 'player';
         this.ai = null;
         this.empathySystem = null;
         this.stormSystem = null;
-
         this.selectedPiece = null;
 
         this.bindEvents();
@@ -51,10 +51,10 @@ class GameController {
     /**
      * Starts a new game with the given configuration.
      */
-    startGame(playerTeamId, opponentTeamId, aiType) {
-        console.log(`Starting game with Player: ${playerTeamId}, Opponent: ${opponentTeamId}, AI: ${aiType}`);
+    startGame(playerTeamId, opponentTeamId, aiType, gameMode = 'checkers') {
+        console.log(`Starting ${gameMode} game with Player: ${playerTeamId}, Opponent: ${opponentTeamId}, AI: ${aiType}`);
         this.gameState = 'active';
-
+        this.gameMode = gameMode;
         this.playerTeamId = playerTeamId;
         this.opponentTeamId = opponentTeamId;
         
@@ -74,8 +74,6 @@ class GameController {
             opponentTeam: TEAMS[this.opponentTeamId],
         });
         this.eventEmitter.emit('turnChanged', { currentPlayer: this.currentPlayer });
-
-        console.log("Game Controller initialized and game started.", this);
     }
 
     /**
@@ -86,126 +84,56 @@ class GameController {
         const playerTeamData = TEAMS[this.playerTeamId];
         const opponentTeamData = TEAMS[this.opponentTeamId];
 
-        // Create and place player pieces
-        for (let i = 0; i < 12; i++) {
-            const row = 5 + Math.floor(i / 4);
-            const col = (i % 4) * 2 + ((row % 2 === 0) ? 1 : 0);
-            const pieceData = playerTeamData.members[i % playerTeamData.members.length];
-            const piece = new Piece(`player_${i}`, 'player', playerTeamData, pieceData, this.eventEmitter);
-            this.board.addPiece(piece, row, col);
-            this.pieces.set(piece.id, piece);
-        }
+        if (this.gameMode === 'checkers') {
+            const playerPawns = playerTeamData.members.filter(m => m.role === 'Pawn');
+            const opponentPawns = opponentTeamData.members.filter(m => m.role === 'Pawn');
 
-        // Create and place opponent pieces
-        for (let i = 0; i < 12; i++) {
-            const row = 0 + Math.floor(i / 4);
-            const col = (i % 4) * 2 + ((row % 2 !== 0) ? 1 : 0);
-            const pieceData = opponentTeamData.members[i % opponentTeamData.members.length];
-            const piece = new Piece(`opponent_${i}`, 'opponent', opponentTeamData, pieceData, this.eventEmitter);
-            this.board.addPiece(piece, row, col);
-            this.pieces.set(piece.id, piece);
-        }
-    }
-    
-    /**
-     * Gathers the entire current game state into a serializable object for saving.
-     * @returns {object} A snapshot of the game state.
-     */
-    getSaveState() {
-        // Serialize all pieces into plain objects
-        const serializedPieces = Array.from(this.pieces.values()).map(p => p.serialize());
-        
-        // Serialize the board grid using piece IDs instead of full objects
-        const boardState = this.board.grid.map(row => 
-            row.map(piece => piece ? piece.id : null)
-        );
+            for (let i = 0; i < 12; i++) {
+                const pRow = 5 + Math.floor(i / 4);
+                const pCol = (i % 4) * 2 + (pRow % 2 === 0 ? 1 : 0);
+                const pData = playerPawns[i % playerPawns.length];
+                const pPiece = new Piece(`player_${i}`, 'player', playerTeamData, pData, this.eventEmitter);
+                this.board.addPiece(pPiece, pRow, pCol);
+                this.pieces.set(pPiece.id, pPiece);
 
-        return {
-            gameState: this.gameState,
-            currentPlayer: this.currentPlayer,
-            playerTeamId: this.playerTeamId,
-            opponentTeamId: this.opponentTeamId,
-            aiType: this.ai.aiType,
-            pieces: serializedPieces,
-            board: boardState,
-            stormSystem: {
-                isActive: this.stormSystem.stormIsActive,
-                type: this.stormSystem.stormType,
-                turnsUntil: this.stormSystem.turnsUntilStorm,
+                const oRow = 0 + Math.floor(i / 4);
+                const oCol = (i % 4) * 2 + (oRow % 2 === 0 ? 1 : 0);
+                const oData = opponentPawns[i % opponentPawns.length];
+                const oPiece = new Piece(`opponent_${i}`, 'opponent', opponentTeamData, oData, this.eventEmitter);
+                this.board.addPiece(oPiece, oRow, oCol);
+                this.pieces.set(oPiece.id, oPiece);
             }
-        };
-    }
+        } else { // Chess setup
+            const backRank = ['Rook', 'Knight', 'Bishop', 'Queen', 'King', 'Bishop', 'Knight', 'Rook'];
+            for (let i = 0; i < 8; i++) {
+                const opData = opponentTeamData.members.find(m => m.role === 'Pawn') || opponentTeamData.members[8 + i];
+                const oPawn = new Piece(`opponent_pawn_${i}`, 'opponent', opponentTeamData, opData, this.eventEmitter);
+                this.board.addPiece(oPawn, 1, i);
+                this.pieces.set(oPawn.id, oPawn);
 
-    /**
-     * Loads a game from a state object, reconstructing the entire game.
-     * @param {object} state - The game state object from the save file.
-     */
-    loadFromState(state) {
-        console.log("Loading game from state:", state);
-        this.gameState = state.gameState;
-        this.currentPlayer = state.currentPlayer;
-        this.playerTeamId = state.playerTeamId;
-        this.opponentTeamId = state.opponentTeamId;
+                const omData = opponentTeamData.members.find(m => m.role === backRank[i]) || opponentTeamData.members[i];
+                const oMajor = new Piece(`opponent_${backRank[i]}_${i}`, 'opponent', opponentTeamData, omData, this.eventEmitter);
+                this.board.addPiece(oMajor, 0, i);
+                this.pieces.set(oMajor.id, oMajor);
+                
+                const ppData = playerTeamData.members.find(m => m.role === 'Pawn') || playerTeamData.members[8 + i];
+                const pPawn = new Piece(`player_pawn_${i}`, 'player', playerTeamData, ppData, this.eventEmitter);
+                this.board.addPiece(pPawn, 6, i);
+                this.pieces.set(pPawn.id, pPawn);
 
-        // Re-initialize systems
-        this.board = new Board(this.eventEmitter);
-        this.empathySystem = new EmpathySystem(this.eventEmitter);
-        this.ai = new AIOpponent(state.aiType, this.eventEmitter);
-
-        // Re-create all piece instances from the serialized data
-        this.pieces.clear();
-        state.pieces.forEach(pState => {
-            const teamData = TEAMS[pState.owner === 'player' ? this.playerTeamId : this.opponentTeamId];
-            const memberData = teamData.members.find(m => m.name === pState.name);
-            const piece = new Piece(pState.id, pState.owner, teamData, memberData, this.eventEmitter);
-            
-            // Restore the dynamic state of the piece
-            piece.trust = pState.trust;
-            piece.emotionalState = pState.emotionalState;
-            if (pState.isKing) {
-                piece.makeKing();
-            }
-            this.pieces.set(piece.id, piece);
-        });
-
-        // Re-populate the board grid using the newly created piece instances
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const pieceId = state.board[r][c];
-                if (pieceId) {
-                    const piece = this.pieces.get(pieceId);
-                    this.board.addPiece(piece, r, c);
-                }
+                const pmData = playerTeamData.members.find(m => m.role === backRank[i]) || playerTeamData.members[i];
+                const pMajor = new Piece(`player_${backRank[i]}_${i}`, 'player', playerTeamData, pmData, this.eventEmitter);
+                this.board.addPiece(pMajor, 7, i);
+                this.pieces.set(pMajor.id, pMajor);
             }
         }
-        
-        const allPieces = Array.from(this.pieces.values());
-        this.stormSystem = new StormSystem(this.eventEmitter, allPieces);
-        this.stormSystem.stormIsActive = state.stormSystem.isActive;
-        this.stormSystem.stormType = state.stormSystem.type;
-        this.stormSystem.turnsUntilStorm = state.stormSystem.turnsUntil;
-        
-        // Announce that the game is ready to be rendered by the UI
-        this.eventEmitter.emit('gameStarted', {
-            board: this.board,
-            pieces: allPieces,
-            playerTeam: TEAMS[this.playerTeamId],
-            opponentTeam: TEAMS[this.opponentTeamId],
-        });
-        this.eventEmitter.emit('turnChanged', { currentPlayer: this.currentPlayer });
-
-        console.log("Game successfully loaded and reconstructed.");
     }
-
 
     /**
      * Handles the logic when a player clicks on a square on the board.
-     * @param {object} data - The event data, containing { row, col }.
      */
     onSquareClicked({ row, col }) {
-        if (this.gameState !== 'active' || this.currentPlayer !== 'player') {
-            return;
-        }
+        if (this.gameState !== 'active' || this.currentPlayer !== 'player') return;
 
         const pieceAtSquare = this.board.getPieceAt(row, col);
 
@@ -217,24 +145,40 @@ class GameController {
     }
 
     /**
-     * Selects a piece, checking its emotional state first.
-     * @param {Piece} piece - The piece to be selected.
+     * Selects a piece, considering game rules and emotional state.
+     * @param {Piece} piece - The piece the player is trying to select.
      */
     selectPiece(piece) {
+        // First, check for forced captures and if the pieces that can make them are regulated.
+        const allCaptures = this.board.getAllCaptureMovesForPlayer('player');
+        const canRegulatedPieceCapture = allCaptures.some(cap => !cap.piece.isDysregulated());
+
+        // If a regulated piece CAN capture, the player MUST select a piece that has a capture move.
+        if (canRegulatedPieceCapture) {
+            const pieceHasCapture = allCaptures.some(cap => cap.piece.id === piece.id);
+            if (!pieceHasCapture) {
+                this.eventEmitter.emit('actionError', { message: "A mandatory capture is available. You must take it." });
+                return;
+            }
+        }
+        
+        // Now, check the emotional state of the selected piece.
         if (piece.isDysregulated()) {
             this.eventEmitter.emit('empathyRequired', { piece });
-            return;
+            return; // Stop the selection process and wait for an empathy action.
         }
 
+        // If all checks pass, select the piece.
         this.deselectPiece();
         this.selectedPiece = piece;
-        const validMoves = this.board.getValidMoves(piece);
+        
+        // The valid moves depend on whether captures are suspended or not.
+        const validMoves = this.board.getValidMoves(piece, canRegulatedPieceCapture);
         this.eventEmitter.emit('pieceSelected', { piece, validMoves });
     }
+    
+    // ... (rest of the file from deselectPiece onwards remains the same)
 
-    /**
-     * Deselects the currently selected piece.
-     */
     deselectPiece() {
         if (this.selectedPiece) {
             this.eventEmitter.emit('pieceDeselected', { piece: this.selectedPiece });
@@ -242,11 +186,11 @@ class GameController {
         }
     }
 
-    /**
-     * Handles an attempt to move a piece to a new square.
-     */
     handleMoveAttempt(piece, toRow, toCol) {
-        const validMoves = this.board.getValidMoves(piece);
+        const allCaptures = this.board.getAllCaptureMovesForPlayer('player');
+        const canRegulatedPieceCapture = allCaptures.some(cap => !cap.piece.isDysregulated());
+        const validMoves = this.board.getValidMoves(piece, canRegulatedPieceCapture);
+
         const targetMove = validMoves.find(move => move.to.row === toRow && move.to.col === toCol);
 
         if (targetMove) {
@@ -257,9 +201,6 @@ class GameController {
         }
     }
 
-    /**
-     * Executes a validated move.
-     */
     performMove(piece, move) {
         const fromPos = this.board.getPiecePosition(piece.id);
         this.board.movePiece(piece, move.to.row, move.to.col);
@@ -284,9 +225,6 @@ class GameController {
         this.checkGameOver();
     }
 
-    /**
-     * Handles the result of an empathy interaction.
-     */
     onEmpathyResponse({ pieceId, choice }) {
         const piece = this.pieces.get(pieceId);
         if (!piece) return;
@@ -306,9 +244,6 @@ class GameController {
         }
     }
 
-    /**
-     * Switches the turn to the next player.
-     */
     switchTurn() {
         if (this.gameState !== 'active') return;
 
@@ -320,9 +255,6 @@ class GameController {
         }
     }
 
-    /**
-     * Triggers the AI's turn to make a move.
-     */
     triggerAITurn() {
         setTimeout(() => {
             if (this.gameState !== 'active') return;
@@ -340,9 +272,6 @@ class GameController {
         }, 1200);
     }
 
-    /**
-     * Checks if the game has reached a win/loss condition.
-     */
     checkGameOver() {
         const playerPieces = this.board.getPlayerPieces('player');
         const opponentPieces = this.board.getPlayerPieces('opponent');
@@ -357,7 +286,7 @@ class GameController {
         }
 
         const activePieces = this.currentPlayer === 'player' ? playerPieces : opponentPieces;
-        const hasMoves = activePieces.some(p => this.board.getValidMoves(p).length > 0);
+        const hasMoves = activePieces.some(p => this.board.getValidMoves(p, true).length > 0);
         if (!hasMoves) {
             this.endGame(this.currentPlayer === 'player' ? 'opponent' : 'player');
             return true;
@@ -365,14 +294,84 @@ class GameController {
         return false;
     }
 
-    /**
-     * Ends the game and announces the winner.
-     */
     endGame(winner) {
         if (this.gameState === 'gameover') return;
         this.gameState = 'gameover';
         this.eventEmitter.emit('gameOver', { winner });
         console.log(`Game over! Winner: ${winner}`);
+    }
+    
+    // getSaveState and loadFromState are omitted for brevity but would be here
+    getSaveState() {
+        const serializedPieces = Array.from(this.pieces.values()).map(p => p.serialize());
+        const boardState = this.board.grid.map(row => row.map(piece => piece ? piece.id : null));
+
+        return {
+            gameState: this.gameState,
+            gameMode: this.gameMode,
+            currentPlayer: this.currentPlayer,
+            playerTeamId: this.playerTeamId,
+            opponentTeamId: this.opponentTeamId,
+            aiType: this.ai.aiType,
+            pieces: serializedPieces,
+            board: boardState,
+            stormSystem: {
+                isActive: this.stormSystem.stormIsActive,
+                type: this.stormSystem.stormType,
+                turnsUntil: this.stormSystem.turnsUntilStorm,
+            }
+        };
+    }
+
+    loadFromState(state) {
+        console.log("Loading game from state:", state);
+        this.gameState = state.gameState;
+        this.gameMode = state.gameMode || 'checkers';
+        this.currentPlayer = state.currentPlayer;
+        this.playerTeamId = state.playerTeamId;
+        this.opponentTeamId = state.opponentTeamId;
+
+        this.board = new Board(this.eventEmitter);
+        this.empathySystem = new EmpathySystem(this.eventEmitter);
+        this.ai = new AIOpponent(state.aiType, this.eventEmitter);
+
+        this.pieces.clear();
+        state.pieces.forEach(pState => {
+            const teamData = TEAMS[pState.owner === 'player' ? this.playerTeamId : this.opponentTeamId];
+            const memberData = teamData.members.find(m => m.name === pState.name);
+            const piece = new Piece(pState.id, pState.owner, teamData, memberData, this.eventEmitter);
+            
+            piece.trust = pState.trust;
+            piece.emotionalState = pState.emotionalState;
+            if (pState.isKing) piece.makeKing();
+            this.pieces.set(piece.id, piece);
+        });
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const pieceId = state.board[r][c];
+                if (pieceId) {
+                    const piece = this.pieces.get(pieceId);
+                    this.board.addPiece(piece, r, c);
+                }
+            }
+        }
+        
+        const allPieces = Array.from(this.pieces.values());
+        this.stormSystem = new StormSystem(this.eventEmitter, allPieces);
+        this.stormSystem.stormIsActive = state.stormSystem.isActive;
+        this.stormSystem.stormType = state.stormSystem.type;
+        this.stormSystem.turnsUntilStorm = state.stormSystem.turnsUntil;
+        
+        this.eventEmitter.emit('gameStarted', {
+            board: this.board,
+            pieces: allPieces,
+            playerTeam: TEAMS[this.playerTeamId],
+            opponentTeam: TEAMS[this.opponentTeamId],
+        });
+        this.eventEmitter.emit('turnChanged', { currentPlayer: this.currentPlayer });
+
+        console.log("Game successfully loaded and reconstructed.");
     }
 }
 

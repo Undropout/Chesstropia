@@ -182,6 +182,237 @@
             max-width: 600px;
             overflow-x: auto;
         }
+
+        /* --- CORRECTED & IMPROVED GAME STYLES --- */
+        #game-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            flex: 1; /* Allow it to fill space in a flex container */
+            overflow: hidden; /* Prevent children from overflowing */
+        }
+
+        .game-screen {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        #board-container {
+            width: 70vh;
+            height: 70vh;
+            max-width: 80vw;
+            max-height: 80vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--glow-color);
+            background-color: var(--scanline-bg-color-transparent);
+        }
+
+        .square { display: flex; justify-content: center; align-items: center; position: relative; }
+        .square.light { background-color: rgba(128, 128, 128, 0.1); }
+        .square.dark { background-color: rgba(0, 0, 0, 0.2); }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5vh;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .player-piece {
+            background-color: rgba(0, 255, 0, 0.2);
+            border: 2px solid var(--glow-color);
+            color: var(--glow-color);
+            text-shadow: 0 0 5px var(--glow-color);
+        }
+
+        .opponent-piece {
+            background-color: rgba(255, 0, 128, 0.2);
+            border: 2px solid var(--critical-color, magenta);
+            color: var(--critical-color, magenta);
+            text-shadow: 0 0 5px var(--critical-color, magenta);
+        }
+
+        .piece.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--accent-primary, #F59E0B);
+        }
+
+        .square.valid-move::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30%;
+            height: 30%;
+            background: var(--glow-color);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        #side-panel {
+            flex-grow: 1;
+            max-width: 400px;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        #hud-container, #empathy-container, #game-actions-container {
+            border: 1px solid var(--glow-color-transparent);
+            padding: 1rem;
+            background: var(--scanline-bg-color-transparent);
+            overflow: auto;
+        }
+
+        #hud-container { flex: 2; }
+        #empathy-container { flex: 3; }
+        #game-actions-container { flex: 1; }
+        
+        /* DIALOGUE SYSTEM STYLES */
+        #dialogue-container {
+            position: fixed; /* Use fixed to overlay the entire viewport */
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7); /* Darker backdrop */
+        }
+
+        .dialogue-box {
+            width: 90%;
+            max-width: 800px;
+            background: var(--scanline-bg-color-transparent-strong);
+            border: 2px solid var(--glow-color);
+            color: var(--glow-color);
+            padding: 2rem;
+            animation: fade-in 0.3s ease-out;
+            max-height: 80vh; /* Prevent it from being too tall */
+            overflow-y: auto; /* Allow scrolling if content is long */
+        }
+
+        .dialogue-content { width: 100%; }
+        .dialogue-character { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 5px var(--glow-color); }
+        .dialogue-text { font-size: 1.2rem; margin-bottom: 1.5rem; }
+        #dialogue-next-btn { float: right; }
+
+        /* TEAM SELECTOR STYLES */
+        .team-selector-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            color: var(--glow-color);
+            box-sizing: border-box; /* Ensure padding is included in height/width */
+        }
+
+        .team-selector-header {
+            text-align: center;
+            border-bottom: 2px solid var(--glow-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .team-selector-header h1 { font-size: 2.5rem; text-shadow: 0 0 10px var(--glow-color); }
+
+        .team-selector-main {
+            display: flex;
+            flex: 1; /* Allow main content to grow and shrink */
+            gap: 2rem;
+            overflow: hidden; /* Hide overflow on the container */
+        }
+
+        .team-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto; /* Enable scrolling on this column */
+            padding-right: 1rem;
+        }
+
+        .team-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: 1px solid var(--glow-color-transparent);
+            color: var(--glow-color);
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .team-button:hover { background: var(--glow-color-transparent); border-color: var(--glow-color); }
+
+        .team-button.active {
+            background: var(--glow-color);
+            color: var(--scanline-bg-color);
+            text-shadow: none;
+            font-weight: bold;
+        }
+
+        .team-details {
+            flex: 2;
+            padding: 1.5rem;
+            border: 1px solid var(--glow-color-transparent);
+            overflow-y: auto; /* Allow details to scroll if content is long */
+            background: var(--scanline-bg-color-transparent);
+        }
+
+        .team-details .placeholder { color: var(--glow-color-transparent-strong); font-style: italic; }
+        .team-details h2 { font-size: 2rem; margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--glow-color); }
+        .team-details .team-description { margin-bottom: 1.5rem; color: var(--glow-color); opacity: 0.9; }
+        .team-details .team-motivation { margin-bottom: 1.5rem; font-weight: bold; color: var(--accent-color); }
+        .roster-list { list-style: none; padding: 0; }
+        .roster-list li { padding: 0.25rem 0; }
+
+        .team-selector-footer {
+            text-align: center;
+            padding-top: 1.5rem;
+            margin-top: 1rem;
+            border-top: 2px solid var(--glow-color);
+            flex-shrink: 0; /* Prevent footer from shrinking */
+        }
+
+        .team-selector-footer .menu-button { padding: 1rem 3rem; font-size: 1.25rem; }
+        .team-selector-footer .menu-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent;
+            color: var(--glow-color-transparent-strong);
+            border-color: var(--glow-color-transparent-strong);
+        }
     </style>
 </head>
 <body data-theme="green">
@@ -259,17 +490,11 @@
     
    <!-- This single script block now correctly loads and initializes the game -->
     <script type="module">
-        // This is the main entry point for the application.
-        // It imports the App class and sets up the landing page listeners.
-        
-        // The 'import' statement will recursively load all necessary modules.
-        // If any module fails (like the teamList.js error), it will throw an error here.
         import App from './js/app.js';
 
         let appInstance = null;
 
         function initializeLandingPage() {
-            // Phosphor theme selector
             document.querySelectorAll('.phosphor-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -281,7 +506,6 @@
                 });
             });
             
-            // Restore saved phosphor theme
             const savedTheme = localStorage.getItem('chesstropia_phosphor_theme');
             if (savedTheme) {
                 document.body.setAttribute('data-theme', savedTheme);
@@ -290,7 +514,6 @@
                 if (savedButton) savedButton.classList.add('active');
             }
             
-            // Handle start game button
             document.getElementById('start-game').addEventListener('click', (e) => {
                 e.preventDefault();
                 startChessTropia();
@@ -300,23 +523,34 @@
         function startChessTropia() {
             console.log('Starting ChessTropia...');
             
-            // Hide landing content and prepare game container
             document.querySelector('.landing-content').style.display = 'none';
             const gameContainer = document.getElementById('game-container');
             gameContainer.style.display = 'block';
             document.body.classList.add('game-running');
             
-            // Initialize and start the application
             if (!appInstance) {
-                appInstance = new App(gameContainer);
-                appInstance.start();
-                console.log('ChessTropia started successfully');
+                try {
+                    appInstance = new App(gameContainer);
+                    appInstance.start();
+                    console.log('ChessTropia started successfully');
+                } catch (error) {
+                    console.error('Failed to start game:', error);
+                    const loader = document.querySelector('.initial-loader');
+                    loader.style.display = 'flex';
+                    loader.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: var(--phosphor-color, #00ff00);">
+                            <h1>INITIALIZATION FAILED</h1>
+                            <div class="error-details">
+                                <strong>Error:</strong> ${error.message}<br>
+                            </div>
+                            <p style="margin-top: 1rem; opacity: 0.7;">
+                                Check the browser console (F12) for more details.
+                            </p>
+                        </div>`;
+                }
             }
         }
 
-        // Run the initialization code once the DOM is fully loaded.
-        // This structure ensures that if the module import fails, the error is clearly
-        // visible in the console, and the landing page listeners won't be attached.
         document.addEventListener('DOMContentLoaded', () => {
             initializeLandingPage();
         });

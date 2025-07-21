@@ -112,46 +112,45 @@ class Board {
      */
     getPlayerPieces(owner) {
         const pieces = [];
-        for (const piece of this.piecePositions.keys()) {
-            const p = this.getPieceAt(this.piecePositions.get(piece).row, this.piecePositions.get(piece).col);
-            if (p && p.owner === owner) {
-                pieces.push(p);
+        for (const [pieceId, pos] of this.piecePositions.entries()) {
+            const piece = this.grid[pos.row][pos.col];
+            if (piece && piece.owner === owner) {
+                pieces.push(piece);
             }
         }
         return pieces;
     }
 
     /**
-     * Returns a simplified representation of the board state, useful for AI.
-     * @returns {Array<Array<object|null>>}
+     * NEW HELPER METHOD: Gathers all possible capture moves for a given player.
+     * @param {string} owner - 'player' or 'opponent'.
+     * @returns {Array<{piece: Piece, move: object}>} An array of all possible captures.
      */
-    getBoardState() {
-        return this.grid.map(row => row.map(piece => piece ? piece.serialize() : null));
+    getAllCaptureMovesForPlayer(owner) {
+        const allPieces = this.getPlayerPieces(owner);
+        let allCaptureMoves = [];
+        for (const piece of allPieces) {
+            const captures = this.getCaptureMovesForPiece(piece);
+            captures.forEach(move => allCaptureMoves.push({ piece, move }));
+        }
+        return allCaptureMoves;
     }
 
     /**
-     * Calculates all valid moves for a given piece.
-     * This follows standard checkers rules, including forced captures.
+     * Calculates all valid moves for a given piece, considering forced captures.
      * @param {Piece} piece - The piece to calculate moves for.
+     * @param {boolean} forceCaptures - If true, enforces the mandatory capture rule.
      * @returns {Array<object>} An array of valid move objects.
      */
-    getValidMoves(piece) {
-        // First, check for any available capture moves for any of the player's pieces.
-        // In checkers, captures are mandatory.
-        const allMyPieces = this.getPlayerPieces(piece.owner);
-        let allCaptureMoves = [];
-        for (const p of allMyPieces) {
-            allCaptureMoves = allCaptureMoves.concat(this.getCaptureMovesForPiece(p));
+    getValidMoves(piece, forceCaptures = true) {
+        if (forceCaptures) {
+            const allCaptureMoves = this.getAllCaptureMovesForPlayer(piece.owner);
+            if (allCaptureMoves.length > 0) {
+                return this.getCaptureMovesForPiece(piece);
+            }
         }
-
-        if (allCaptureMoves.length > 0) {
-            // If there are capture moves available anywhere on the board for this player,
-            // only return the capture moves for the currently selected piece.
-            return this.getCaptureMovesForPiece(piece);
-        } else {
-            // If no captures are available, return the simple moves for the selected piece.
-            return this.getSimpleMovesForPiece(piece);
-        }
+        // If no captures are forced or available, return simple moves.
+        return this.getSimpleMovesForPiece(piece);
     }
 
     /**

@@ -17,8 +17,7 @@ class EmpathySystem {
      * Handles an empathy interaction and calculates the result.
      * @param {Piece} piece - The piece being interacted with.
      * @param {string} choiceId - The ID of the choice the player made (0-3).
-     * @returns {object} An object describing the outcome, e.g., 
-     * { success: boolean, trustChange: number, newState: string, message: string }.
+     * @returns {object} An object describing the outcome.
      */
     handleInteraction(piece, choiceId) {
         const choiceIndex = parseInt(choiceId);
@@ -29,7 +28,6 @@ class EmpathySystem {
             message: "The response had no effect."
         };
 
-        // The effectiveness of a choice depends on the piece's current emotional state.
         switch (piece.emotionalState) {
             case 'anxious':
                 result = this.handleAnxiousInteraction(choiceIndex);
@@ -40,12 +38,10 @@ class EmpathySystem {
             case 'fight':
                 result = this.handleFightInteraction(choiceIndex);
                 break;
-            // Add cases for 'freeze', 'fawn', etc. as they are implemented.
+            case 'freeze': // NEWLY ADDED
+                result = this.handleFreezeInteraction(choiceIndex);
+                break;
         }
-
-        // A critical success can lead to a breakthrough (instant regulation and high trust boost).
-        // A critical failure can lead to a trust catastrophe.
-        // For now, we'll stick to simple success/failure.
 
         if (result.success) {
             result.newState = 'regulated';
@@ -57,59 +53,56 @@ class EmpathySystem {
 
     /**
      * Defines the outcomes for interacting with an 'anxious' piece.
-     * @param {number} choiceIndex - The player's choice.
-     * @returns {object} The interaction result.
      */
     handleAnxiousInteraction(choiceIndex) {
         switch (choiceIndex) {
-            case 0: // "Offer reassurance."
-                return { success: true, trustChange: 2, message: "They seem to appreciate the reassurance." };
-            case 1: // "Ask what's wrong."
-                return { success: true, trustChange: 1, message: "They feel heard." };
-            case 2: // "Give them space."
-                return { success: false, trustChange: -1, message: "Space feels like abandonment right now." };
-            case 3: // "Tell them to calm down."
-                return { success: false, trustChange: -3, message: "This invalidates their feelings, making it worse." };
-            default:
-                return { success: false, trustChange: 0, message: "Invalid choice." };
+            case 0: return { success: true, trustChange: 2, message: "They seem to appreciate the reassurance." };
+            case 1: return { success: true, trustChange: 1, message: "They feel heard." };
+            case 2: return { success: false, trustChange: -1, message: "Space feels like abandonment right now." };
+            case 3: return { success: false, trustChange: -3, message: "This invalidates their feelings, making it worse." };
+            default: return { success: false, trustChange: 0, message: "Invalid choice." };
         }
     }
 
     /**
      * Defines the outcomes for interacting with a 'shutdown' piece.
-     * @param {number} choiceIndex - The player's choice.
-     * @returns {object} The interaction result.
      */
     handleShutdownInteraction(choiceIndex) {
         switch (choiceIndex) {
-            case 0: // "Sit with them in silence."
-                return { success: true, trustChange: 2, message: "Your quiet presence is comforting." };
-            case 1: // "Ask a gentle question."
-                return { success: true, trustChange: 1, message: "The gentle prompt helps them connect." };
-            case 2: // "Try to make them laugh."
-                return { success: false, trustChange: -2, message: "Humor feels jarring and dismissive." };
-            case 3: // "Demand they snap out of it."
-                return { success: false, trustChange: -4, message: "The pressure causes them to withdraw further." };
-            default:
-                return { success: false, trustChange: 0, message: "Invalid choice." };
+            case 0: return { success: true, trustChange: 2, message: "Your quiet presence is comforting." };
+            case 1: return { success: true, trustChange: 1, message: "The gentle prompt helps them connect." };
+            case 2: return { success: false, trustChange: -2, message: "Humor feels jarring and dismissive." };
+            case 3: return { success: false, trustChange: -4, message: "The pressure causes them to withdraw further." };
+            default: return { success: false, trustChange: 0, message: "Invalid choice." };
         }
     }
 
     /**
      * Defines the outcomes for interacting with a 'fight' piece.
-     * @param {number} choiceIndex - The player's choice.
-     * @returns {object} The interaction result.
      */
     handleFightInteraction(choiceIndex) {
         switch (choiceIndex) {
-            case 0: // "Validate their anger."
-                return { success: true, trustChange: 2, message: "Feeling understood helps them regulate." };
-            case 1: // "Tell them they're overreacting."
-                return { success: false, trustChange: -3, message: "This feels like an attack, escalating their anger." };
-            case 2: // "Threaten consequences."
-                return { success: false, trustChange: -4, message: "The threat confirms they are in danger." };
-            case 3: // "Match their energy."
-                return { success: false, trustChange: -2, message: "Escalating the conflict solves nothing." };
+            case 0: return { success: true, trustChange: 2, message: "Feeling understood helps them regulate." };
+            case 1: return { success: false, trustChange: -3, message: "This feels like an attack, escalating their anger." };
+            case 2: return { success: false, trustChange: -4, message: "The threat confirms they are in danger." };
+            case 3: return { success: false, trustChange: -2, message: "Escalating the conflict solves nothing." };
+            default: return { success: false, trustChange: 0, message: "Invalid choice." };
+        }
+    }
+    
+    /**
+     * NEW: Defines the outcomes for interacting with a 'freeze' piece.
+     */
+    handleFreezeInteraction(choiceIndex) {
+        switch (choiceIndex) {
+            case 0: // "Wait patiently."
+                return { success: true, trustChange: 2, message: "Your patience gives them the time they need to come back to the present." };
+            case 1: // "Gently state you're here."
+                return { success: true, trustChange: 1, message: "The gentle reminder of your presence is a grounding anchor." };
+            case 2: // "Describe the current moment."
+                return { success: false, trustChange: -1, message: "The sensory input is too much right now, making it harder to focus." };
+            case 3: // "Shake them to snap out of it."
+                return { success: false, trustChange: -4, message: "The sudden, aggressive action is terrifying and deepens the freeze." };
             default:
                 return { success: false, trustChange: 0, message: "Invalid choice." };
         }
